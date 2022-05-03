@@ -56,7 +56,7 @@ class SvgGraph {
         background_rect.setAttribute('fill',color);
         document.getElementById(this.id).appendChild(background_rect);
     }
-    render_axis(min,max,x_label,y_label) {
+    render_axis(x_min,x_max,y_min,y_max,x_label,y_label) {
         const axis_rect = document.createElementNS(this.ns,"rect");
         // stroke is rendered out and in, half of axis width needs to be subtracted
         axis_rect.setAttribute('x',this.axis_padding_left + this.axis_width/2);
@@ -72,8 +72,8 @@ class SvgGraph {
         document.getElementById(this.id).appendChild(axis_rect);
         
 
-        const y_tick_values = this.generate_y_tick_values();
-        const x_tick_values = this.generate_x_tick_values();
+        const y_tick_values = this.generate_tick_values(y_min,y_max)[0];
+        const x_tick_values = this.generate_tick_values(x_min,x_max)[0];
 
         // render y ticks
         let index = 0;
@@ -245,7 +245,6 @@ class SvgGraph {
         let [temp_dx_mantissa,temp_dx_exponent] = (temp_dx.toExponential()).split("e"); // get the exponent and mantissa of the number
         temp_dx = settings.dx || 0.5 * (10 ** Number(temp_dx_exponent));  // make dx equal to 0.5 in the correct number magnitude
 
-
         let bars_num = Math.ceil(max_difference/temp_dx);
         let bars_start = min_value;
 
@@ -290,11 +289,47 @@ class SvgGraph {
 
     }
 
-    generate_x_tick_values() {
-        return ["0","2","4","6","8","10"];
-    }
-    generate_y_tick_values() {
-        return ["0","2.0","4.0","6.0","8.0","10.0"];
+    generate_tick_values(min,max,delta) {
+        const difference = max - min;
+        const [diff_mantissa,diff_exp] = (difference.toExponential()).split("e"); 
+        delta = delta || (5 * 10 ** (Number(diff_exp) - 1));
+
+
+        // zaokrouhleni min a max podle dx
+        let min_tick = min - Math.abs(min) % delta;
+        let max_tick = max + delta - Math.abs(max) % delta;
+
+        // generace hodnot
+        let ticks = [];
+        const split = 5;
+        for(let i = 0; i <= split; i++) {
+            ticks.push(min_tick + i *(max_tick - min_tick)/split);
+        }
+
+        console.log(min);
+        console.log(max);
+        console.table(ticks);
+
+        // maximum exponent
+        let ticks_exp = 0;
+        const [min_mantissa,min_exp] = (ticks[0].toExponential()).split("e");
+        const [max_mantissa,max_exp] = (ticks[ticks.length - 1].toExponential()).split("e"); 
+        if (Math.abs(Number(min_exp)) > Math.abs(Number(max_exp))) {
+            ticks_exp = min_exp;
+        } else {
+            ticks_exp = max_exp;
+        }
+
+        // necha puvodni hodnoty cisel, pokud nejsou moc velka/mala
+        if(ticks_exp >= 0 && ticks_exp < 4) {
+            ticks_exp = 0;
+        // jinak necha pouze nasobky exponenty a vykresli exponent zvlast
+        } else {
+            ticks = ticks.map(tick_value => tick_value/(10 ** ticks_exp))
+        }
+
+
+        return [ticks,ticks_exp];
     }
 }
 

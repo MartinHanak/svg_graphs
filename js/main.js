@@ -14,7 +14,7 @@ svg_graph_2.render();
 
 
 svg_graph_1.render_background('rgba(0,0,0,0.2)');
-svg_graph_1.render_axis(0,10,"x","y");
+svg_graph_1.render_axis(0,3,0,10,"x","y");
 
 // hover event for all svgs
 /*
