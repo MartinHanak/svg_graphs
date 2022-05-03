@@ -6,6 +6,9 @@ import {SvgGraph, SvgRect, FilledSvgRect} from './svg_classes.js';
 const svg_graph_1 = new SvgGraph('svg-graph-1');
 svg_graph_1.render();
 
+const test_data = [60,40,50,32,43,34,53,34];
+svg_graph_1.render_histogram(test_data,{dx:10.0,center_bars:true});
+
 const svg_graph_2 = new SvgGraph('svg-graph-2');
 svg_graph_2.render();
 

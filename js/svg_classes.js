@@ -234,6 +234,62 @@ class SvgGraph {
          }
     }
 
+    // data = 1d array of numbers
+    render_histogram(data,settings={center_bars: false}) {
+        data = data.sort();
+        const min_value = data[0];
+        const max_value = data[data.length - 1];
+        const max_difference = max_value - min_value;
+
+        let temp_dx = max_difference/(data.length); // initial guess, e.g. = 20/100 = 0.2
+        let [temp_dx_mantissa,temp_dx_exponent] = (temp_dx.toExponential()).split("e"); // get the exponent and mantissa of the number
+        temp_dx = settings.dx || 0.5 * (10 ** Number(temp_dx_exponent));  // make dx equal to 0.5 in the correct number magnitude
+
+
+        let bars_num = Math.ceil(max_difference/temp_dx);
+        let bars_start = min_value;
+
+        if (settings.center_bars) {
+            bars_num += 1;
+            bars_start -= temp_dx/2;
+        }
+
+        // generate x values = start of histogram bars on the x-axis (not their center)
+        let data_x = [];
+        for(let i = 0; i < bars_num; i++) {
+            data_x[i] = bars_start + i * temp_dx;
+        }
+
+        // generate y-values for the histogram
+        let data_y = [];
+        for(let i = 0; i < bars_num; i++) {
+            data_y[i] = 0;
+        }
+
+        for(let i = 0; i < data.length; i++) {
+            for(let j = 0; j < bars_num; j++) {
+                // data is sorted
+                if((data[i] < data_x[j] + temp_dx) && data[i] >= data_x[j]) {
+                    data_y[j] += 1;
+                } 
+                // numbers exactly at the end bar border
+                if(j === bars_num - 1 && data[i] === data_x[j] + temp_dx) {
+                    data_y[j] += 1;
+                }
+            }
+        }
+/*
+        let sum = data_y.reduce((sum,y) => sum + y,0);
+        console.table(data);
+        console.table(data_x);
+        console.table(data_y);
+        console.log(sum);
+        */
+ 
+
+
+    }
+
     generate_x_tick_values() {
         return ["0","2","4","6","8","10"];
     }
