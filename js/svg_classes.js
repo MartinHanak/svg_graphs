@@ -46,6 +46,32 @@ class SvgGraph {
             console.log(`Fractional coordinates: `);
             console.log(`${x/svg.clientWidth} and ${y/svg.clientHeight}`);
         });
+
+        svg.addEventListener('mousedown', (e) => {
+            const bound = svg.getBoundingClientRect();
+            const initial_x = e.clientX - bound.left - svg.clientLeft;
+            const initial_y = e.clientY - bound.top - svg.clientTop;
+
+            const inner_svg = svg.querySelector("svg");
+            const initial_viewBox = inner_svg.getAttributeNS(null,"viewBox").split(" ");
+
+            function translateSvgView(event) {
+                let x = event.clientX - bound.left - svg.clientLeft;
+                let y = event.clientY - bound.top - svg.clientTop;
+
+                let delta_x = x - initial_x;
+                let delta_y = y - initial_y;
+
+                let new_x = Number(initial_viewBox[0]) - delta_x;
+                let new_y = Number(initial_viewBox[1]) - delta_y;
+
+                inner_svg.setAttributeNS(null,'viewBox',`${new_x} ${new_y} ${initial_viewBox[2]} ${initial_viewBox[3]}`)
+            }
+            svg.addEventListener('mousemove', translateSvgView);
+            svg.addEventListener('mouseup', () => {
+                svg.removeEventListener('mousemove',translateSvgView);
+            });
+        });
     }
     render_background(color) {
         const background_rect = document.createElementNS(this.ns,"rect");
@@ -277,15 +303,14 @@ class SvgGraph {
                 }
             }
         }
-/*
-        let sum = data_y.reduce((sum,y) => sum + y,0);
-        console.table(data);
-        console.table(data_x);
-        console.table(data_y);
-        console.log(sum);
-        */
- 
 
+        // append inner SVG
+        appendSvgChild("svg",document.getElementById(this.id),{x: this.innerX, y: this.innerY, width: this.innerWidth, height: this.innerHeight, 
+        viewBox: `0 0 ${this.innerWidth} ${this.innerHeight}`});
+
+
+        appendSvgChild("rect",document.querySelector(`#${this.id}>svg`),{x: 130, y: 70, fill: "blue", width: 20, height: 20,});
+ 
 
     }
 
@@ -305,10 +330,6 @@ class SvgGraph {
         for(let i = 0; i <= split; i++) {
             ticks.push(min_tick + i *(max_tick - min_tick)/split);
         }
-
-        console.log(min);
-        console.log(max);
-        console.table(ticks);
 
         // maximum exponent
         let ticks_exp = 0;
@@ -362,4 +383,26 @@ class FilledSvgRect extends SvgRect {
     }
 }
 
-export {SvgGraph, SvgRect, FilledSvgRect};
+
+function appendSvgChild(child,parent,settings = {}) {
+    const ns = "http://www.w3.org/2000/svg";
+    const child_element = document.createElementNS(ns,child);
+
+    for (const property in settings) {
+        child_element.setAttributeNS(null,property,settings[property]);
+    }
+    parent.appendChild(child_element);
+}
+
+function appendInnerSvgChild(child,parent,settings = {}) {
+    const ns = "http://www.w3.org/2000/svg";
+    const child_element = document.createElementNS(ns,child);
+
+    for (const property in settings) {
+        child_element.setAttributeNS(null,property,settings[property]);
+    }
+    parent.querySelector("svg").appendChild(child_element);
+}
+
+
+export {SvgGraph, SvgRect, FilledSvgRect, appendSvgChild};
